@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from "@angular/common/http";
 import { Observable } from 'rxjs';
-import { GoogleChartInterface } from 'ng2-google-charts/google-charts-interfaces';
 declare var $: any;
 
 @Component({
@@ -14,30 +13,30 @@ export class IndexComponent implements OnInit {
   constructor(private httpClient: HttpClient) { }
 
   images = []
+  texts = []
+  numbers = []
+  sound: string;
+  videoS: string;
+  status: any;
 
   uploadEndpoint: string = 'https://upload-236609.appspot.com/upload'
-  shotsEndpoint: string = 'https://refined-window-236417.appspot.com/shots/'
-  labelsEndpoint: string = 'https://labels-236518.appspot.com/label/'
+  shotsEndpoint: string = 'https://get-shots.appspot.com/shots/'
+  descEndpoint: string = 'https://cloud-proj-images.azurewebsites.net/api/images/descg'
+  ttsEndpoint: string = 'https://cloud-proj-images.azurewebsites.net/api/images/tts'
   bucketUrl: string = 'https://storage.googleapis.com/galeata_magica_123/'
+  dbEndpoint: string = 'https://cloud-proj-images.azurewebsites.net/api/db'
 
   ngOnInit() {
+    this.status = document.getElementById("status")
+    this.status.innerHTML = "Waiting for user input"
+  }
+
+  setStatus(text: string) {
+    this.status.innerHTML = text
   }
 
   fileToUpload: File = null;
-
-  public columnChart: GoogleChartInterface = {
-    chartType: 'ColumnChart',
-    dataTable: [['Label', 'Confidence'], ['',0]],
-    options: {
-      title: 'Labels',
-      animation: {
-        duration: 1000,
-        easing: 'out',
-        startup: true,
-      },
-      height: 1000,
-    }
-  };
+  hidden: boolean = true;
 
   postFile(fileToUpload: File): Observable<Object> {
     const endpoint = this.uploadEndpoint;
@@ -47,40 +46,76 @@ export class IndexComponent implements OnInit {
       .post(endpoint, formData)
   }
 
+  toggleImages() {
+    this.hidden = !this.hidden;
+  }
+
   handleFileInput(files: FileList) {
     let id: string
     this.fileToUpload = files.item(0);
+    this.setStatus("Uploading file")
     console.log(this.fileToUpload)
     this.postFile(this.fileToUpload).subscribe(
       data => {
         console.log("upload done")
         id = data["id"]
-        //id = "a3e45367-2783-4d87-b397-07777a73ca56"
+        this.videoS = this.bucketUrl + id + ".mp4"
+        let video: any = document.getElementById('video')
+        video.load()
         console.log(id)
         let endpoint = this.shotsEndpoint + id
+        this.setStatus("Breaking video into shots")
         this.httpClient.get(endpoint).subscribe(
           data => {
             console.log("shots done")
             console.log(data)
             let count = data["Counter"]
             this.images = []
-            for (var i=0; i<count; i++) {
+            for (var i = 0; i < count; i++) {
               this.images.push(id + '/' + i + ".jpg");
             }
             console.log(this.images)
-            let endpoint = this.labelsEndpoint + id
-            this.httpClient.get(endpoint).subscribe(
+            this.setStatus("Analyzing images")
+            this.httpClient.post(this.descEndpoint, { "Filename": id, "Count": count }).subscribe(
               data => {
-                console.log("lables done")
-                this.columnChart.dataTable = [['Label', 'Confidence']]
-                var keys = Object.keys(data);
-                for (var i = 0; i < keys.length; i++) {
-                  this.columnChart.dataTable.push([keys[i],data[keys[i]]])
+                console.log("desc done")
+                console.log(data)
+                this.texts = []
+                this.numbers = []
+                for (var i = 0; i < count; i++) {
+                  this.texts.push(data[i]);
+                  this.numbers.push(i)
                 }
-                this.columnChart.component.draw()
+                this.setStatus("\"Reading\" the text")
+                this.httpClient.post(this.ttsEndpoint, { "Text": this.texts, }).subscribe(
+                  data => {
+                    console.log("tts done")
+                    console.log(data)
+
+                    this.sound = this.bucketUrl + data
+
+                    let audio: any = document.getElementById('audio')
+                    audio.load()
+
+                    this.setStatus("Done, please enjoy or upload a new file")
+
+                    this.httpClient.post(this.dbEndpoint, { "VideoUrl": this.videoS, "AudioUrl": this.sound }).subscribe(
+                      data => { 
+                        console.log("db done")
+                        console.log(data)
+                      },
+                      error => {
+                        console.log("error at post db")
+                        console.log(JSON.stringify(error))
+                      }
+                    )
+                  }, error => {
+                    console.log("error at post tts")
+                    console.log(JSON.stringify(error))
+                  })
               },
               error => {
-                console.log("error at get labels")
+                console.log("error at post desc")
                 console.log(JSON.stringify(error))
               }
             )

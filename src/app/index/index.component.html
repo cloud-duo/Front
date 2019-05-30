@@ -1,16 +1,39 @@
-<p>
-  index works!
-</p>
+<div id="body">
 
-<form>
-  <label for="file">Choose File: </label>
-  <input name="file" formControlName="file" id="file" type="file" (change)="handleFileInput($event.target.files)"><br>
- </form>
+  <form>
+    <label for="file">Choose a video file to start the process:</label>
+    <br><br>
+    <label class="custom-file-upload">
+    <input name="file" formControlName="file" id="file" type="file" (change)="handleFileInput($event.target.files)">
+    Choose file
+  </label>
+  </form>
 
- <ul>
-  <li *ngFor="let image of images">
-    <img src ="{{ bucketUrl }}{{ image }}">
-  </li>
-</ul>
+  <video width="320" height="240" id="video" [hidden]="videoS == undefined" controls>
+    <source id="audioSource" src="{{ videoS }}" type="video/mp4">
+    Your browser does not support the video element.
+  </video>
+  <br>
+  <audio id="audio" [hidden]="sound == undefined" controls>
+    <source id="audioSource" src="{{ sound }}" type="audio/mpeg">
+    Your browser does not support the audio element.
+  </audio>
 
-<google-chart [data]="columnChart"></google-chart>
+  <br>
+
+  <p id="status">
+
+  </p>
+
+  <br>
+  <button (click)="toggleImages()">Show shots from video</button>
+
+  <div [hidden]="hidden">
+    <ul>
+      <li *ngFor="let i of numbers">
+        <img src="{{ bucketUrl }}{{ images[i] }}">
+        {{ texts[i] }}
+      </li>
+    </ul>
+  </div>
+</div>

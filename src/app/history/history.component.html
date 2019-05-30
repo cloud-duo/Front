@@ -1,0 +1,17 @@
+<div id="body">
+
+  <ul>
+    <li *ngFor="let i of numbers">
+      <video width="320" height="240" id="video" controls>
+        <source id="audioSource" src="{{ videos[i] }}" type="video/mp4">
+        Your browser does not support the video element.
+      </video>
+      <br>
+      <audio id="audio" controls>
+        <source id="audioSource" src="{{ sounds[i] }}" type="audio/mpeg">
+        Your browser does not support the audio element.
+      </audio>
+    </li>
+  </ul>
+
+</div>

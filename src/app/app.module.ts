@@ -8,9 +8,11 @@ import { Ng2GoogleChartsModule } from 'ng2-google-charts';
 import { AppComponent } from './app.component';
 import { IndexComponent } from './index/index.component';
 import { PageNotFoundComponent } from './page-not-found/page-not-found.component';
+import { HistoryComponent } from './history/history.component';
 
 const appRoutes: Routes = [
   { path: 'index', component: IndexComponent },
+  { path: 'history', component: HistoryComponent },
   { path: '**', component: PageNotFoundComponent }
 ];
 
@@ -18,7 +20,8 @@ const appRoutes: Routes = [
   declarations: [
     AppComponent,
     IndexComponent,
-    PageNotFoundComponent
+    PageNotFoundComponent,
+    HistoryComponent
   ],
   imports: [
     BrowserModule,
